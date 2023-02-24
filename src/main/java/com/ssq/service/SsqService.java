@@ -1,22 +1,24 @@
-package com.ssq;
+package com.ssq.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.ssq.util.HttpURLConnectionUtil;
 import com.ssq.vo.ResultBean;
 import com.ssq.vo.SsqVo;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
-public class Ssq {
+@Service
+public class SsqService {
 
     /**
      * 获取最新双色球中奖号码
      *
      * @return
      */
-    public static String[] getLastSsq() throws UnsupportedEncodingException {
+    public String[] getLastSsq() throws UnsupportedEncodingException {
         String ssq = null;
         String url = "http://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice?name=ssq&issueCount=1";
         Map<String, String> head = new HashMap<String, String>();
@@ -25,28 +27,29 @@ public class Ssq {
         if (StringUtils.isNotBlank(result)) {
             ResultBean resultBean = JSONObject.parseObject(result, ResultBean.class);
             SsqVo ssqVo = resultBean.getResult().get(0);
-            ssq =ssqVo.getRed()+","+ssqVo.getBlue();
+            ssq = ssqVo.getRed() + "," + ssqVo.getBlue();
         }
-        return StringUtils.split(ssq,',');
+        return StringUtils.split(ssq, ',');
     }
 
-    public static void judge(String[] luckyNumbers, int[] userNumbers) {
+    public String judge(String[] userNumbers) throws UnsupportedEncodingException {
+        String[] luckyNumbers = getLastSsq();
 //        定义两个变量分别存储红球和蓝球命中的个数
         int redNumbers = 0;
         int blueNumbers = 0;
-        List<Integer> resut=new ArrayList();
+        List<Integer> resut = new ArrayList();
         //判断红球中了几个
         for (int i = 0; i < userNumbers.length - 1; i++) {
             for (int j = 0; j < luckyNumbers.length - 1; j++) {
-                if (userNumbers[i] == Integer.valueOf(luckyNumbers[j])) {
-                    resut.add(userNumbers[i]);
+                if (Integer.valueOf(userNumbers[i].trim()) == Integer.valueOf(luckyNumbers[j].trim())) {
+                    resut.add(Integer.valueOf(userNumbers[i].trim()));
                     redNumbers++;
                     break;
                 }
             }
         }
         //判断蓝球是否命中
-        blueNumbers = userNumbers[6] == Integer.valueOf(luckyNumbers[6]) ? 1 : 0;
+        blueNumbers = Integer.valueOf(userNumbers[6].trim()) == Integer.valueOf(luckyNumbers[6]) ? 1 : 0;
 
         //判断中奖情况
 
@@ -54,29 +57,30 @@ public class Ssq {
         printArray(luckyNumbers);
         System.out.println("您投注的号码是：");
         printArray(userNumbers);
-        System.out.println("您中了" + redNumbers + "个红球,他们分别是:"+resut.toString());
+        System.out.println("您中了" + redNumbers + "个红球,他们分别是:" + resut.toString());
         System.out.println("您是否命中蓝球:" + (blueNumbers == 1 ? "是" : "否"));
 
 
         if (blueNumbers == 1 && redNumbers < 3) {
             System.err.println("恭喜你中了六等奖");
+            return "恭喜你中了六等奖";
         } else if (blueNumbers == 1 && redNumbers == 3 || blueNumbers == 0 && redNumbers == 4) {
-            System.err.println("恭喜你中了五等奖");
+            return "恭喜你中了五等奖";
         } else if (blueNumbers == 1 && redNumbers == 4 || blueNumbers == 0 && redNumbers == 5) {
-            System.err.println("恭喜你中了四等奖");
+            return "恭喜你中了四等奖";
         } else if (blueNumbers == 1 && redNumbers == 5) {
-            System.err.println("恭喜你中了三等奖");
+            return "恭喜你中了三等奖";
         } else if (blueNumbers == 0 && redNumbers == 6) {
-            System.err.println("恭喜你中了二等奖");
+            return "恭喜你中了二等奖";
         } else if (blueNumbers == 1 && redNumbers == 6) {
-            System.err.println("恭喜你中了一等奖");
+            return "恭喜你中了一等奖";
         } else {
-            System.err.println("您未中奖，感谢你为福利事业做出贡献!!!");
+            return "您未中奖，感谢你为福利事业做出贡献!!!";
         }
     }
 
 
-    public static void printArray(int[] arr) {
+    public void printArray(int[] arr) {
         System.out.print("[");
         for (int i = 0; i < arr.length; i++) {
             System.out.print(i == arr.length - 1 ? arr[i] : arr[i] + ", ");
@@ -84,7 +88,7 @@ public class Ssq {
         System.out.println("]");
     }
 
-    public static void printArray(String[] arr) {
+    public void printArray(String[] arr) {
         System.out.print("[");
         for (int i = 0; i < arr.length; i++) {
             System.out.print(i == arr.length - 1 ? arr[i] : arr[i] + ", ");
@@ -92,7 +96,7 @@ public class Ssq {
         System.out.println("]");
     }
 
-    public static int[] userInputNumbers() {
+    public int[] userInputNumbers() {
         //定义一个数组存储7个数字
         int[] numbers = new int[7];
         //让用户存入前6个数字
@@ -109,7 +113,7 @@ public class Ssq {
         return numbers;
     }
 
-    public static int[] createLuckNumber() {
+    public int[] createLuckNumber() {
         int[] numbers = new int[7];
 
         Random r = new Random();
